@@ -14,6 +14,15 @@ var DefaultLinesAfter = 2
 // DefaultLinesBefore is number of source lines before traced line to display.
 var DefaultLinesBefore = 3
 
+// DefaultIgnoreFirstFrames is the number of first frames to ignore
+var DefaultIgnoreFirstFrames = 0
+
+// DefaultMaxFrames is the total number of frames to print/return (0 means "no limit")
+var DefaultMaxFrames = 0
+
+// DefaultIgnoreFirstFrames is the number of last frames to ignore
+var DefaultIgnoreLastFrames = 0
+
 var cache = map[string][]string{}
 
 var mutex sync.RWMutex
@@ -168,7 +177,13 @@ func sprint(err error, nums []int, colorized bool) string {
 	if withSource {
 		rows = append(rows, "")
 	}
+	i := 0
+	appendedFrames := 0
 	for _, frame := range frames {
+		i++
+		if i <= DefaultIgnoreFirstFrames {
+			continue
+		}
 		message := frame.String()
 		if colorized {
 			message = bold(message)
@@ -176,6 +191,13 @@ func sprint(err error, nums []int, colorized bool) string {
 		rows = append(rows, message)
 		if withSource {
 			rows = sourceRows(rows, frame, before, after, colorized)
+		}
+		appendedFrames++
+		if DefaultMaxFrames > 0 && appendedFrames >= DefaultMaxFrames {
+			break
+		}
+		if DefaultIgnoreLastFrames > 0 && i + DefaultIgnoreLastFrames >= len(frames) {
+			break
 		}
 	}
 	return strings.Join(rows, "\n")
